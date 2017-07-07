@@ -1,0 +1,158 @@
+FORMAT: 1A
+HOST: http://api.openedge.com/
+
+# Open Edge Express API
+The Open Edge Express API
+
+Note that for sandbox use the host url is 
+
+http://api.sandbox.openedge.com/
+
+For deployed use the host url is
+
+http://localhost
+
+Schema is defined according to the json-ld standard using schema.org and when necessary we have defined additional schema.
+
+Also note that the Express API leaf resources are identical to payment gateway API resources.
+The fields are also identical with to the payment gateway API with the addition of terminal interaction fields.
+
+API design concepts
+hateos - hypermedia as the engine of application state
+http://www.markus-lanthaler.com/research/on-using-json-ld-to-create-evolvable-restful-services.pdf
+https://developer.paypal.com/docs/api/hateoas-links/
+
+semantic web with json-ld
+https://rubenverborgh.github.io/WebFundamentals/semantic-web/
+
+some guidance to this api from the w3c community
+http://web-payments.github.io/web-payments-messaging/
+
+
+# Group Credit Card Transactions 
+Credit card transactions methods
+
+## Credit Card Purchase [POST /v2/express/cc/purchase]
+
+- Attributes (PurchaseRequest)
+
+- Request (application/ld+json)
+
+- Request (application/xml)
+
+- Response 201 (application/ld+json)
+    - Attributes (PurchaseResponse) 
+
+- Response 201 (application/xml)
+    - Attributes (PurchaseResponse) 
+
+## Data Structures
+
+### PurchaseRequest(array[Money, Card, GatewayInfo, Options])
+
+### SchemaOrg
++ @context: http://schema.org
+
+### Money (object)
++ @context: http://schema.org
++ amount
+    + @type: MonetaryAmount,
+    + value: 180000,
+    + currency: USD
+
+### Card (object)
++ @context: http://schema.org
++ cardHolder
+    + @type: Person
+    + givenName: Christian (string, required) - card owners first name
+    + familyName: Grobmeier (string, required) - card owners last name
++ trackData: 12345 (number) - card track data
++ brand: visa (string, required) - card brand
++ emvData 
+    + something: something (string)
+    
+### GatewayInfo (object) - data needed for the gateway to process a transaction
+- apiLogin : 123456789012 (number, required) 
+- apiPassword : "UfHjHCcd3x1ERZE0xcg76XHBJcJU425h" (string, required)
+- duplicateMode: true (boolean)
+    
+### Options (object)   
++ merchantInfo (object)
+    + orderID: 123456789 (number)
+    + invoice: 123456789 (number)
+    + merchantID: 123456789 (number)
+
++ terminalInfo (object)
+    + cashierID: 098754408974 (number)
+    + terminalID: 1234567891011223 (number)
+
++ customerResponses (object)
+    + approval: true (boolean)
+    + tip: 3.00 (number)
+    + signature: ==FGRTBLABLA (string)
+    + signatureFormat: png (string)
+                
+### PurchaseResponse (Money)
++ url: //v2/express/cc/purchase
+<!--
+{
+"headers": {
+"specVersion":"XWeb3.6",
+"credential":{
+"xWebId": "906000000030",
+"terminalId": "90002210",
+"authKey": "FS4gVt2wRjAXnCkEsM31hMzwmjUQsTJg"
+},
+"transactionType": "CREDIT_DEBIT_CARD",
+"chargeType": "PURCHASE",
+"industry":"RETAIL",
+"orderId": "7432763555158167"
+},
+"posEntry": {
+"eci":1,
+"presence":{
+"cardPresent":true,
+"customerPresent":true,
+"pinPresent":true,
+"signaturePresent":true
+},
+"posType":"PC",
+"entryMethod":"APPLE_IN_APP_PAYMENT",
+"entryCapability":{
+"pinCapability":true,
+"trackCapability":"BOTH"
+},
+"deviceId":"1123224343",
+"preferredServicesCustomer":false,
+"laneId":"1"
+},
+"amounts": {
+"totalAmount": 1.99
+},
+"transactionOption": {
+"duplicatedMode": "CHECKING_OFF"
+},
+"hostPaySetting":{
+"integrationMethod": "SETUP_FIRST",
+"posDevice": {
+"type": "EMV",
+"model": "magtek_dynapro_sc",
+"address": "1",
+"rcmPort": 21111,
+"language": "ENGLISH",
+"showEmvReceipt": true
+}
+}
+}
+-->
+## Group Typical Transaction Responses
+
++ 200 `OK` - The request was successful (some API calls may return 201 instead).
++ 201 `Created` - The request was successful and a transaction was created.
++ 204 `No Content` - The request was successful but there is no representation to return (that is, the response is empty).
++ 401 `Unauthorized` - Authentication failed or user does not have permissions for the requested operation.
++ 403 `Forbidden` - Access denied.
++ 404 `Not Found` - Resource was not found.
++ 405 `Method Not Allowed` - Requested method is not supported for the specified resource.
++ 422 `Bad Request` - The request could not be understood or was missing required parameters.
++ 503 `Service Unavailable` - The service is temporary unavailable. Try again later.
